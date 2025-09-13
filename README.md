@@ -41,6 +41,22 @@ Auto Mode (discover and track live races)
 
 `python -m pcs_pushover.cli --auto --interval 30 --discovery-interval 90`
 
+Deployment (Raspberry Pi self‑hosted runner)
+
+- Build and run in Docker locally:
+
+`docker build -t pcs-pushover:latest .`
+`docker run -d --name pcs-pushover --restart unless-stopped \
+  -e PUSHOVER_TOKEN=your_app_token \
+  -e PUSHOVER_USER=your_user_key \
+  pcs-pushover:latest`
+
+- GitHub Actions deploy (self‑hosted runner):
+  - Register your Raspberry Pi as a GitHub Actions self‑hosted runner (with Docker installed).
+  - Add repo secrets `PUSHOVER_TOKEN`, `PUSHOVER_USER` (and optional `PCS_ARGS`, e.g. `--auto --interval 30`).
+  - On push to `main`/`master`, `.github/workflows/deploy.yml` will build and (re)start the container on the Pi.
+
+
 - `--race` accepts a relative PCS path (`race/.../live`) or a full URL.
 - `--interval` is the polling interval in seconds.
 

@@ -1,0 +1,5 @@
+procyclingstats
+requests
+python-dotenv
+rich
+beautifulsoup4

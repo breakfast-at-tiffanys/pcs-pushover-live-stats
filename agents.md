@@ -29,3 +29,4 @@ Run these locally **before committing**; the CI will block if they fail.
 ruff check --fix .
 black .
 isort . --profile black --line-length 88
+```

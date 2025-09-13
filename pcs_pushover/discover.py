@@ -23,18 +23,18 @@ def discover_live_race_paths() -> list[str]:
     except Exception:
         return []
     soup = BeautifulSoup(html, "html.parser")
-    paths = []
+    paths: list[str] = []
     for a in soup.select('a[href*="/live"]'):
-        href = a.get("href", "")
-        if not href:
+        href_val = a.get("href")
+        if not isinstance(href_val, str) or not href_val:
             continue
         # Normalize to a relative path under race/
         # Strip domain if present, and any leading slash
-        href = href.split("procyclingstats.com/")[-1].lstrip("/")
+        href = href_val.split("procyclingstats.com/")[-1].lstrip("/")
         if href.startswith("race/") and "/live" in href:
             paths.append(href)
     # Deduplicate while preserving order
-    seen = set()
+    seen: set[str] = set()
     uniq: list[str] = []
     for p in paths:
         if p not in seen:

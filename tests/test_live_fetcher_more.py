@@ -1,6 +1,11 @@
 from types import SimpleNamespace
 
 import pcs_pushover.live_fetcher as lf
+from pcs_pushover.live_fetcher import LiveStatsClient as L
+from pcs_pushover.live_fetcher import (
+    LiveStatsDataMissingError,
+    LiveStatsUnavailableError,
+)
 
 
 class FakeScraper:
@@ -46,4 +51,24 @@ def test_live_fetcher_init_requires_pcs(monkeypatch):
         lf.LiveStatsClient("race/foo/2025/stage-1/live")
         assert False, "expected ImportError when PCS scraper missing"
     except ImportError:
+        pass
+
+
+def test_extract_data_classifies_unavailable_and_missing(monkeypatch):
+    # Unavailable wording
+    html1 = (
+        "<div>Due to technical difficulties this page is temporarily unavailable.</div>"
+    )
+    try:
+        L._extract_data_json(html1)
+        raise AssertionError("expected LiveStatsUnavailableError")
+    except LiveStatsUnavailableError:
+        pass
+
+    # Page not found / 404
+    html2 = "<h1>Page not found</h1>"
+    try:
+        L._extract_data_json(html2)
+        raise AssertionError("expected LiveStatsDataMissingError")
+    except LiveStatsDataMissingError:
         pass

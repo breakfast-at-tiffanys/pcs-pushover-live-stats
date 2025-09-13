@@ -5,6 +5,7 @@ target-version = ["py310"]
 [tool.isort]
 profile = "black"
 line_length = 88
+known_first_party = ["pcs_pushover"]
 
 [tool.ruff]
 line-length = 88
@@ -18,4 +19,4 @@ ignore = ["D203", "D213"]  # keep one-liners on first line; no blank line before
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D", "E501", "B011"]
+"tests/*" = ["D", "E501", "B011", "I001"]

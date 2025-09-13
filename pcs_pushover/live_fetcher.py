@@ -38,7 +38,8 @@ class LiveStatsClient:
                 "procyclingstats package is required to fetch LiveStats. "
                 "Install it via pip or run within the project venv."
             )
-        self.scraper = _PCS_Scraper(race_url)  # type: ignore
+        # Attribute typed as Any to avoid leaking Unknown from external lib
+        self.scraper: Any = _PCS_Scraper(race_url)  # type: ignore[call-arg]
         self.last_html: str | None = None
 
     def refresh(self) -> dict[str, Any]:
@@ -81,11 +82,24 @@ class LiveStatsClient:
             dict[str, Any]: Parsed JSON object.
 
         Raises:
-            ValueError: If the marker cannot be found in the HTML.
+            LiveStatsUnavailableError: When PCS signals a temporary outage.
+            LiveStatsDataMissingError: When the ``var data`` block is missing
+                from the page (race not live yet, wrong URL, or layout change).
         """
         m = re.search(r"var\s+data\s*=\s*(\{.*?\});", html, re.S)
         if not m:
-            raise ValueError("LiveStats data not found in page.")
+            lower = html.lower()
+            if "temporarily unavailable" in lower or "technical difficulties" in lower:
+                raise LiveStatsUnavailableError(
+                    "PCS page temporarily unavailable (technical difficulties)"
+                )
+            if "page not found" in lower or "404" in lower:
+                raise LiveStatsDataMissingError("LiveStats page not found (check URL)")
+            msg = (
+                "LiveStats data not found in page. The race may not be live yet, "
+                "or the page layout changed."
+            )
+            raise LiveStatsDataMissingError(msg)
         json_str = m.group(1)
         # JSON is valid as-is
         data = json.loads(json_str)
@@ -103,3 +117,15 @@ class LiveStatsClient:
         """
         m = re.search(r"var\s+id\s*=\s*(\d+);", html)
         return m.group(1) if m else None
+
+
+class LiveStatsError(ValueError):
+    """Base class for LiveStats extraction errors."""
+
+
+class LiveStatsUnavailableError(LiveStatsError):
+    """Raised when PCS indicates a temporary unavailability."""
+
+
+class LiveStatsDataMissingError(LiveStatsError):
+    """Raised when no LiveStats ``var data`` block is found in the page."""

@@ -9,12 +9,17 @@ import json
 import re
 import sys
 import time
-from typing import Any
+from collections.abc import Mapping
+from typing import Any, cast
 
 from dotenv import load_dotenv
 
 from .discover import discover_live_race_paths
-from .live_fetcher import LiveStatsClient
+from .live_fetcher import (
+    LiveStatsClient,
+    LiveStatsDataMissingError,
+    LiveStatsUnavailableError,
+)
 from .notifier import PushoverNotifier
 from .state import StateStore
 
@@ -51,7 +56,7 @@ def _result_url(u: str | None) -> str | None:
         return u
 
 
-def format_extra_row(row: dict[str, Any]) -> str:
+def format_extra_row(row: Mapping[str, object]) -> str:
     """Format an ``extra_results`` entry into a compact string.
 
     Args:
@@ -61,16 +66,17 @@ def format_extra_row(row: dict[str, Any]) -> str:
         str: One-line description such as ``"KOM #1 Rider (5 pts) +2s"``.
     """
     # Example keys include: extra_id, ertype, rnk, ridername, pnt, bonis
-    etypes = {
+    etypes: dict[int, str] = {
         1: "Sprint",
         2: "KOM",
         3: "Bonus",
     }
-    kind = etypes.get(row.get("ertype"), f"Type {row.get('ertype')}")
-    rank = row.get("rnk")
-    name = row.get("ridername")
-    pnt = row.get("pnt")
-    bon = row.get("bonis")
+    etype_val = cast(int | None, row.get("ertype"))
+    kind = etypes.get(etype_val if etype_val is not None else -1, f"Type {etype_val}")
+    rank = cast(int | None, row.get("rnk"))
+    name = cast(str | None, row.get("ridername"))
+    pnt = cast(int | None, row.get("pnt"))
+    bon = cast(int | None, row.get("bonis"))
     parts = [f"{kind}"]
     if rank is not None:
         parts.append(f"#{rank}")
@@ -119,6 +125,48 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--debug", action="store_true", help="Print parsed data keys to stdout"
     )
+    # Server availability alerts
+    try:
+        # Python 3.9+ BooleanOptionalAction for --[no-] flags
+        bool_action = argparse.BooleanOptionalAction  # type: ignore[attr-defined]
+    except Exception:  # pragma: no cover
+        bool_action = None  # fallback
+    if bool_action:
+        p.add_argument(
+            "--server-alerts",
+            action=bool_action,
+            default=True,
+            help="Enable alerts when PCS becomes unreachable (default: enabled)",
+        )
+        p.add_argument(
+            "--server-recovery-alerts",
+            action=bool_action,
+            default=True,
+            help="Enable alerts when PCS becomes reachable again (default: enabled)",
+        )
+    else:  # pragma: no cover
+        p.add_argument(
+            "--server-alerts",
+            action="store_true",
+            help="Enable alerts when PCS becomes unreachable",
+        )
+        p.add_argument(
+            "--server-recovery-alerts",
+            action="store_true",
+            help="Enable alerts when PCS becomes reachable again",
+        )
+    p.add_argument(
+        "--server-alert-threshold",
+        type=int,
+        default=3,
+        help="Consecutive failures before alerting that PCS is down (default: 3)",
+    )
+    p.add_argument(
+        "--server-alert-cooldown",
+        type=int,
+        default=600,
+        help="Cooldown in seconds between repeated server-down alerts (default: 600)",
+    )
     return p
 
 
@@ -139,8 +187,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     # notifier (shared)
-    client = None
-    notifier = None
+    client: LiveStatsClient | None = None
+    notifier: PushoverNotifier | None = None
     try:
         notifier = PushoverNotifier(args.pushover_token, args.pushover_user)
     except Exception as e:
@@ -155,13 +203,13 @@ def main(argv: list[str] | None = None) -> int:
         link: str = "live",
         title: str | None = None,
         url_override: str | None = None,
-    ):
+    ) -> None:
         print(f"[green]Notify:[/green] {msg}")
         if notifier:
             try:
-                url = url_override
-                if not url and client is not None:
-                    url = client.scraper.url
+                url: str | None = url_override
+                if url is None and client is not None:
+                    url = cast(str | None, getattr(client.scraper, "url", None))
                 if link == "result":
                     url = _result_url(url)
                 notifier.send(message=msg, title=title, url=url)
@@ -203,7 +251,11 @@ def main(argv: list[str] | None = None) -> int:
             and cur.get("last_status") not in {"running", "live", "started"}
             and cur.get("last_status") is not None
         ):
-            link_url = client.scraper.url if client is not None else None
+            link_url = (
+                cast(str | None, getattr(client.scraper, "url", None))
+                if client is not None
+                else None
+            )
             push("Race started", title=race_title, url_override=link_url)
             cur["notified_start"] = True
 
@@ -219,7 +271,11 @@ def main(argv: list[str] | None = None) -> int:
                     marker not in notified_markers
                     and prev_kmtogo > marker >= kmtogo_val
                 ):
-                    link_url = client.scraper.url if client is not None else None
+                    link_url = (
+                        cast(str | None, getattr(client.scraper, "url", None))
+                        if client is not None
+                        else None
+                    )
                     push(
                         f"{int(marker)} km to go",
                         title=race_title,
@@ -233,7 +289,11 @@ def main(argv: list[str] | None = None) -> int:
 
         # 3) Notify when finished
         if finished and not cur.get("notified_finish"):
-            link_url = client.scraper.url if client is not None else None
+            link_url = (
+                cast(str | None, getattr(client.scraper, "url", None))
+                if client is not None
+                else None
+            )
             push("Finished", link="result", title=race_title, url_override=link_url)
             cur["notified_finish"] = True
 
@@ -246,8 +306,23 @@ def main(argv: list[str] | None = None) -> int:
         # Initial fetch (build race key)
         try:
             data = client.refresh()
+        except LiveStatsUnavailableError as e:
+            print(
+                "[red]Failed to load LiveStats:[/red]",
+                f"{e} — PCS may be down. Please try again shortly.",
+            )
+            return 2
+        except LiveStatsDataMissingError as e:
+            print(
+                "[red]Failed to load LiveStats:[/red]",
+                f"{e} — Is the race live and URL ending with /live?",
+            )
+            return 2
         except Exception as e:
-            print(f"[red]Failed to load LiveStats:[/red] {e}")
+            print(
+                "[red]Failed to load LiveStats:[/red]",
+                f"Network or unexpected error: {e}",
+            )
             return 2
 
         race_html = client.last_html or ""
@@ -268,13 +343,47 @@ def main(argv: list[str] | None = None) -> int:
 
         # Poll loop
         interval = max(5, int(args.interval))
+        fail_count = 0
+        last_server_alert = 0.0
         try:
             while True:
                 time.sleep(interval)
                 try:
                     data = client.refresh()
+                    # Success after failures → optionally notify recovery
+                    if fail_count > 0 and getattr(args, "server_recovery_alerts", True):
+                        link_url = cast(
+                            str | None, getattr(client.scraper, "url", None)
+                        )
+                        push(
+                            "PCS reachable again",
+                            title=race_title,
+                            url_override=link_url,
+                        )
+                    fail_count = 0
                 except Exception as e:
                     print(f"[yellow]Fetch error, will retry:[/yellow] {e}")
+                    fail_count += 1
+                    now_ts = time.time()
+                    threshold = int(getattr(args, "server_alert_threshold", 3))
+                    cooldown = int(getattr(args, "server_alert_cooldown", 600))
+                    if (
+                        getattr(args, "server_alerts", True)
+                        and fail_count >= threshold
+                        and (
+                            last_server_alert == 0.0
+                            or now_ts - last_server_alert >= cooldown
+                        )
+                    ):
+                        link_url = cast(
+                            str | None, getattr(client.scraper, "url", None)
+                        )
+                        push(
+                            "PCS server unreachable (will keep retrying)",
+                            title=race_title,
+                            url_override=link_url,
+                        )
+                        last_server_alert = now_ts
                     continue
                 handle(data, state, race_key, race_title)
         except KeyboardInterrupt:
@@ -326,13 +435,49 @@ def main(argv: list[str] | None = None) -> int:
 
             # Poll each tracker
             for race_key, rec in list(trackers.items()):
-                client = rec["client"]  # rebind for handle()
-                race_title = rec["title"]
+                client_i = cast(LiveStatsClient, rec["client"])  # local strong type
+                race_title = cast(str, rec["title"])
                 try:
-                    data = client.refresh()
+                    data = client_i.refresh()
+                    # Success after failures → optionally notify recovery
+                    if rec.get("fail_count", 0) > 0 and getattr(
+                        args, "server_recovery_alerts", True
+                    ):
+                        link_url = cast(
+                            str | None, getattr(client_i.scraper, "url", None)
+                        )
+                        push(
+                            "PCS reachable again",
+                            title=race_title,
+                            url_override=link_url,
+                        )
+                    rec["fail_count"] = 0
                 except Exception as e:
                     print(f"[yellow]Fetch error for {race_key}:[/yellow] {e}")
+                    rec["fail_count"] = rec.get("fail_count", 0) + 1
+                    now_ts = time.time()
+                    threshold = int(getattr(args, "server_alert_threshold", 3))
+                    cooldown = int(getattr(args, "server_alert_cooldown", 600))
+                    if (
+                        getattr(args, "server_alerts", True)
+                        and rec["fail_count"] >= threshold
+                        and (
+                            rec.get("last_server_alert", 0.0) == 0.0
+                            or now_ts - rec.get("last_server_alert", 0.0) >= cooldown
+                        )
+                    ):
+                        link_url = cast(
+                            str | None, getattr(client_i.scraper, "url", None)
+                        )
+                        push(
+                            "PCS server unreachable (will keep retrying)",
+                            title=race_title,
+                            url_override=link_url,
+                        )
+                        rec["last_server_alert"] = now_ts
                     continue
+                # Bind for handle's link_url usage
+                client = client_i
                 handle(data, state, race_key, race_title)
 
             if args.once:

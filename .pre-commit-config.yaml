@@ -15,3 +15,10 @@ repos:
     hooks:
       - id: isort
         args: ["--profile=black", "--line-length=88"]
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright
+        entry: pyright
+        language: node
+        types: [python]

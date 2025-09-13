@@ -1,0 +1,7 @@
+{
+  "include": ["pcs_pushover"],
+  "exclude": ["tests"],
+  "pythonVersion": "3.13",
+  "venv": ".venv",
+  "typeCheckingMode": "strict"
+}

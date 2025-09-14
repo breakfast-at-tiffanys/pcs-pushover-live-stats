@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module pcs_pushover.notifier</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="pcs_pushover.html" class="white">pcs_pushover</a>.notifier</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:/Users/antonsuhr/Documents/pcs-pushover-live-stats/pcs_pushover/notifier.py">/Users/antonsuhr/Documents/pcs-pushover-live-stats/pcs_pushover/notifier.py</a></td></tr></table>
+    <p><span class="code">Pushover&nbsp;notifier&nbsp;wrapper.<br>
+&nbsp;<br>
+Provides&nbsp;a&nbsp;tiny&nbsp;helper&nbsp;around&nbsp;the&nbsp;Pushover&nbsp;REST&nbsp;API&nbsp;for&nbsp;sending&nbsp;messages.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="os.html">os</a><br>
+</td><td class="multicolumn"><a href="requests.html">requests</a><br>
+</td><td class="multicolumn"></td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor index-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
+    
+<tr><td class="decor index-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl>
+<dt class="heading-text"><a href="builtins.html#object">builtins.object</a>
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="pcs_pushover.notifier.html#PushoverNotifier">PushoverNotifier</a>
+</dt></dl>
+</dd>
+</dl>
+ <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="PushoverNotifier">class <strong>PushoverNotifier</strong></a>(<a href="builtins.html#object">builtins.object</a>)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#PushoverNotifier">PushoverNotifier</a>(token:&nbsp;str&nbsp;|&nbsp;None&nbsp;=&nbsp;None,&nbsp;user:&nbsp;str&nbsp;|&nbsp;None&nbsp;=&nbsp;None)&nbsp;-&amp;gt;&nbsp;None<br>
+&nbsp;<br>
+Send&nbsp;notifications&nbsp;to&nbsp;devices&nbsp;via&nbsp;Pushover.<br>
+&nbsp;<br>
+Credentials&nbsp;can&nbsp;be&nbsp;provided&nbsp;directly&nbsp;or&nbsp;read&nbsp;from&nbsp;environment&nbsp;variables<br>
+``PUSHOVER_TOKEN``&nbsp;and&nbsp;``PUSHOVER_USER``.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn">Methods defined here:<br>
+<dl><dt><a name="PushoverNotifier-__init__"><strong>__init__</strong></a>(self, token: str | None = None, user: str | None = None) -&gt; None</dt><dd><span class="code">Initialize&nbsp;the&nbsp;notifier.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;token:&nbsp;Pushover&nbsp;application&nbsp;token.&nbsp;Falls&nbsp;back&nbsp;to&nbsp;``PUSHOVER_TOKEN``.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;user:&nbsp;Pushover&nbsp;user&nbsp;key.&nbsp;Falls&nbsp;back&nbsp;to&nbsp;``PUSHOVER_USER``.<br>
+&nbsp;<br>
+Raises:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ValueError:&nbsp;If&nbsp;credentials&nbsp;are&nbsp;missing.</span></dd></dl>
+
+<dl><dt><a name="PushoverNotifier-send"><strong>send</strong></a>(
+    self,
+    message: str,
+    title: str | None = None,
+    url: str | None = None,
+    priority: int = 0
+) -&gt; None</dt><dd><span class="code">Send&nbsp;a&nbsp;message&nbsp;via&nbsp;Pushover.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;message:&nbsp;Message&nbsp;body.&nbsp;Trimmed&nbsp;to&nbsp;1024&nbsp;characters.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;title:&nbsp;Optional&nbsp;message&nbsp;title.&nbsp;Trimmed&nbsp;to&nbsp;250&nbsp;characters.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;url:&nbsp;Optional&nbsp;URL&nbsp;to&nbsp;attach&nbsp;to&nbsp;the&nbsp;notification.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;priority:&nbsp;Pushover&nbsp;priority;&nbsp;``0``&nbsp;by&nbsp;default.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+</td></tr></table></td></tr></table>
+</body></html>

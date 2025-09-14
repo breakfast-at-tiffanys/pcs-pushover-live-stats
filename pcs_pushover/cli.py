@@ -15,6 +15,7 @@ from typing import Any, cast
 from dotenv import load_dotenv
 
 from .discover import discover_live_race_paths
+from .filters import classify_race, is_men_uwt_or_wc, race_base_from_path
 from .live_fetcher import (
     LiveStatsClient,
     LiveStatsDataMissingError,
@@ -116,14 +117,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Discovery refresh interval in seconds (default: 120)",
     )
     p.add_argument(
-        "--pushover-token", default=None, help="Override PUSHOVER_TOKEN env var"
+        "--pushover-token",
+        default=None,
+        help="Override PUSHOVER_TOKEN env var",
     )
     p.add_argument(
-        "--pushover-user", default=None, help="Override PUSHOVER_USER env var"
+        "--pushover-user",
+        default=None,
+        help="Override PUSHOVER_USER env var",
     )
     p.add_argument("--once", action="store_true", help="Run once and exit")
     p.add_argument(
-        "--debug", action="store_true", help="Print parsed data keys to stdout"
+        "--debug",
+        action="store_true",
+        help="Print parsed data keys to stdout",
     )
     # Server availability alerts
     try:
@@ -167,6 +174,24 @@ def build_parser() -> argparse.ArgumentParser:
         default=600,
         help="Cooldown in seconds between repeated server-down alerts (default: 600)",
     )
+    # Race category filter
+    try:
+        bool_action = argparse.BooleanOptionalAction  # type: ignore[attr-defined]
+    except Exception:  # pragma: no cover
+        bool_action = None
+    if bool_action:
+        p.add_argument(
+            "--only-men-uwt-wc",
+            action=bool_action,
+            default=False,
+            help="Track only Men's WorldTour or World Championships races",
+        )
+    else:  # pragma: no cover
+        p.add_argument(
+            "--only-men-uwt-wc",
+            action="store_true",
+            help="Track only Men's WorldTour or World Championships races",
+        )
     return p
 
 
@@ -216,7 +241,12 @@ def main(argv: list[str] | None = None) -> int:
             except Exception as e:
                 print(f"[red]Pushover error:[/red] {e}")
 
-    def handle(data: dict[str, Any], state: StateStore, race_key: str, race_title: str):
+    def handle(
+        data: dict[str, Any],
+        state: StateStore,
+        race_key: str,
+        race_title: str,
+    ):
         nonlocal client
         if args.debug:
             keys = sorted(list(data.keys()))
@@ -272,7 +302,10 @@ def main(argv: list[str] | None = None) -> int:
                     and prev_kmtogo > marker >= kmtogo_val
                 ):
                     link_url = (
-                        cast(str | None, getattr(client.scraper, "url", None))
+                        cast(
+                            str | None,
+                            getattr(client.scraper, "url", None),
+                        )
                         if client is not None
                         else None
                     )
@@ -294,7 +327,12 @@ def main(argv: list[str] | None = None) -> int:
                 if client is not None
                 else None
             )
-            push("Finished", link="result", title=race_title, url_override=link_url)
+            push(
+                "Finished",
+                link="result",
+                title=race_title,
+                url_override=link_url,
+            )
             cur["notified_finish"] = True
 
         # Persist state
@@ -303,6 +341,18 @@ def main(argv: list[str] | None = None) -> int:
     # Single-race mode
     if not args.auto:
         client = LiveStatsClient(args.race)
+        # Optional classification filter
+        if getattr(args, "only_men_uwt_wc", False):
+            base = race_base_from_path(args.race)
+            uci_tour, category = (None, None)
+            if base:
+                uci_tour, category = classify_race(base)
+            if not is_men_uwt_or_wc(uci_tour, category):
+                print(
+                    "[yellow]Filtered:[/yellow] Not a Men's WorldTour or "
+                    "World Championships race"
+                )
+                return 0
         # Initial fetch (build race key)
         try:
             data = client.refresh()
@@ -353,7 +403,8 @@ def main(argv: list[str] | None = None) -> int:
                     # Success after failures → optionally notify recovery
                     if fail_count > 0 and getattr(args, "server_recovery_alerts", True):
                         link_url = cast(
-                            str | None, getattr(client.scraper, "url", None)
+                            str | None,
+                            getattr(client.scraper, "url", None),
                         )
                         push(
                             "PCS reachable again",
@@ -361,6 +412,9 @@ def main(argv: list[str] | None = None) -> int:
                             url_override=link_url,
                         )
                     fail_count = 0
+                except LiveStatsDataMissingError:
+                    # No LiveStats for this page; do nothing (no server alerts)
+                    continue
                 except Exception as e:
                     print(f"[yellow]Fetch error, will retry:[/yellow] {e}")
                     fail_count += 1
@@ -376,7 +430,8 @@ def main(argv: list[str] | None = None) -> int:
                         )
                     ):
                         link_url = cast(
-                            str | None, getattr(client.scraper, "url", None)
+                            str | None,
+                            getattr(client.scraper, "url", None),
                         )
                         push(
                             "PCS server unreachable (will keep retrying)",
@@ -416,6 +471,14 @@ def main(argv: list[str] | None = None) -> int:
                         data = tmp_client.refresh()
                     except Exception:
                         continue
+                    # Optional classification filter based on race base page
+                    if getattr(args, "only_men_uwt_wc", False):
+                        base = race_base_from_path(url)
+                        uci_tour, category = (None, None)
+                        if base:
+                            uci_tour, category = classify_race(base)
+                        if not is_men_uwt_or_wc(uci_tour, category):
+                            continue
                     race_html = tmp_client.last_html or ""
                     race_id = LiveStatsClient.extract_id(race_html) or url
                     race_key = str(race_id)
@@ -427,7 +490,8 @@ def main(argv: list[str] | None = None) -> int:
                         # Preload status to current to avoid backfilled "started"
                         cur0 = state.for_race(race_key)
                         cur0.setdefault(
-                            "last_status", (data.get("race_status") or "").lower()
+                            "last_status",
+                            (data.get("race_status") or "").lower(),
                         )
                         state.update_race(race_key, cur0)
                         title_str = trackers[race_key]["title"]
@@ -444,7 +508,8 @@ def main(argv: list[str] | None = None) -> int:
                         args, "server_recovery_alerts", True
                     ):
                         link_url = cast(
-                            str | None, getattr(client_i.scraper, "url", None)
+                            str | None,
+                            getattr(client_i.scraper, "url", None),
                         )
                         push(
                             "PCS reachable again",
@@ -452,6 +517,9 @@ def main(argv: list[str] | None = None) -> int:
                             url_override=link_url,
                         )
                     rec["fail_count"] = 0
+                except LiveStatsDataMissingError:
+                    # This race has no LiveStats available; skip quietly
+                    continue
                 except Exception as e:
                     print(f"[yellow]Fetch error for {race_key}:[/yellow] {e}")
                     rec["fail_count"] = rec.get("fail_count", 0) + 1
@@ -467,7 +535,8 @@ def main(argv: list[str] | None = None) -> int:
                         )
                     ):
                         link_url = cast(
-                            str | None, getattr(client_i.scraper, "url", None)
+                            str | None,
+                            getattr(client_i.scraper, "url", None),
                         )
                         push(
                             "PCS server unreachable (will keep retrying)",

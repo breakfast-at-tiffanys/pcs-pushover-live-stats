@@ -4,7 +4,7 @@ FROM python:3.13-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PCS_ARGS="--auto --interval 30"
+    PCS_ARGS="--auto --interval 30 --only-men-uwt-wc"
 
 WORKDIR /app
 
@@ -18,4 +18,3 @@ COPY pcs_pushover ./pcs_pushover
 
 # Default command: auto-discover races and poll
 CMD ["/bin/sh", "-c", "python -m pcs_pushover.cli ${PCS_ARGS}"]
-

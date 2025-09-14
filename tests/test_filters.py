@@ -26,3 +26,6 @@ def test_is_men_uwt_or_wc():
     assert is_men_uwt_or_wc("World Championships", "ME - Men Elite")
     assert not is_men_uwt_or_wc("UCI ProSeries", "Men Elite")
     assert not is_men_uwt_or_wc("UCI Worldtour", "Women Elite")
+    # Accept acronym as well
+    assert is_men_uwt_or_wc("UWT", "Men Elite")
+    assert is_men_uwt_or_wc("WC", "Men Elite")

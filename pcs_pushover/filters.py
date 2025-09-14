@@ -86,9 +86,12 @@ def is_men_uwt_or_wc(uci_tour: str | None, category: str | None) -> bool:
         category: e.g. "Men Elite", "ME - Men Elite", "Women Elite".
     """
     ut = (uci_tour or "").lower()
+    norm_ut = ut.replace(" ", "")
     cat = (category or "").lower()
 
     is_men = ("men" in cat) and ("women" not in cat)
-    is_uwt = "worldtour" in ut
-    is_wc = "world" in ut and "champ" in ut
+    # Accept both full label and acronym
+    is_uwt = ("worldtour" in norm_ut) or ("uwt" in ut)
+    # Accept common full labels and the "WC" acronym (word-boundary)
+    is_wc = ("world" in ut and "champ" in ut) or (re.search(r"\bwc\b", ut) is not None)
     return is_men and (is_uwt or is_wc)

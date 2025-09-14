@@ -288,6 +288,120 @@ def test_cli_push_uses_notifier_send(monkeypatch, tmp_path):
     assert calls["sent"] == 1
 
 
+def test_cli_only_men_uwt_wc_filter(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+
+    # Fake classification to allow
+    monkeypatch.setattr(
+        cli, "classify_race", lambda base: ("UCI Worldtour", "Men Elite")
+    )
+    FakeLiveStatsClient.default_seq = [
+        {
+            "race_status": "prerace",
+            "finished": 0,
+            "kmtogo": 150.0,
+            "sec_since_start": 0,
+        },
+    ]
+    monkeypatch.setattr(cli, "LiveStatsClient", FakeLiveStatsClient)
+    rc = cli.main(
+        ["--race", "race/ok/2025/stage-1/live", "--once", "--only-men-uwt-wc"]
+    )
+    assert rc == 0
+
+    # Fake classification to exclude
+    monkeypatch.setattr(
+        cli, "classify_race", lambda base: ("UCI ProSeries", "Men Elite")
+    )
+    rc2 = cli.main(["--race", "race/bad/2025/stage-1/live", "--only-men-uwt-wc"])
+    assert rc2 == 0  # exits early with filter notice
+
+
+def test_cli_missing_livestats_is_silent(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+
+    class MissingAfterFirst(FakeLiveStatsClient):
+        def __init__(self, url: str):
+            super().__init__(url)
+            type(self).default_seq = [
+                {
+                    "race_status": "running",
+                    "finished": 0,
+                    "kmtogo": 140.0,
+                    "sec_since_start": 10,
+                }
+            ]
+            self._first = True
+
+        def refresh(self):
+            if self._first:
+                self._first = False
+                return super().refresh()
+            raise cli.LiveStatsDataMissingError("no live data")
+
+    monkeypatch.setattr(cli, "LiveStatsClient", MissingAfterFirst)
+
+    pushes = {"msgs": []}
+
+    class FakeNotifier:
+        def __init__(self, token=None, user=None):
+            pass
+
+        def send(self, message, title=None, url=None):
+            pushes["msgs"].append(message)
+
+    monkeypatch.setattr(cli, "PushoverNotifier", FakeNotifier)
+
+    step = {"n": 0}
+
+    def sleeper(_):
+        step["n"] += 1
+        if step["n"] >= 2:
+            raise KeyboardInterrupt()
+
+    monkeypatch.setattr(cli.time, "sleep", sleeper)
+    rc = cli.main(["--race", "race/example/2025/stage-1/live", "--interval", "1"])
+    assert rc == 0
+    # No unreachable server pushes should be sent
+    assert not any("unreachable" in m.lower() for m in pushes["msgs"])  # quiet
+
+
+def test_cli_auto_filter_applies(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+
+    # Two discovered races
+    p_ok = "https://www.procyclingstats.com/race/ok/2025/stage-1/live"
+    p_bad = "https://www.procyclingstats.com/race/bad/2025/stage-1/live"
+    monkeypatch.setattr(cli, "discover_live_race_paths", lambda: [p_ok, p_bad])
+
+    # Classification returns include for ok, exclude for bad
+    def classify(base: str):
+        if "ok/2025" in base:
+            return ("UCI Worldtour", "Men Elite")
+        return ("UCI ProSeries", "Men Elite")
+
+    monkeypatch.setattr(cli, "classify_race", classify)
+
+    class IdClient(FakeLiveStatsClient):
+        def refresh(self):
+            # Encode id based on URL to differentiate tracked races
+            if "ok/2025" in self._url:
+                self.last_html = "<script>var id = 111;</script>"
+            else:
+                self.last_html = "<script>var id = 222;</script>"
+            return {
+                "race_status": "prerace",
+                "finished": 0,
+                "kmtogo": 120.0,
+                "sec_since_start": 0,
+            }
+
+    monkeypatch.setattr(cli, "LiveStatsClient", IdClient)
+
+    rc = cli.main(["--auto", "--once", "--only-men-uwt-wc"])
+    assert rc == 0
+
+
 def test_server_down_alert_and_recovery(monkeypatch, tmp_path):
     """Alert when failures exceed threshold, and recovery message after success."""
     monkeypatch.chdir(tmp_path)

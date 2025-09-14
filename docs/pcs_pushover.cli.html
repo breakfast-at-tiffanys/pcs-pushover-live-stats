@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module pcs_pushover.cli</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="pcs_pushover.html" class="white">pcs_pushover</a>.cli</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:/Users/antonsuhr/Documents/pcs-pushover-live-stats/pcs_pushover/cli.py">/Users/antonsuhr/Documents/pcs-pushover-live-stats/pcs_pushover/cli.py</a></td></tr></table>
+    <p><span class="code">PCS&nbsp;→&nbsp;Pushover&nbsp;CLI&nbsp;for&nbsp;live&nbsp;race&nbsp;notifications.<br>
+&nbsp;<br>
+Tracks&nbsp;PCS&nbsp;LiveStats&nbsp;pages&nbsp;(single&nbsp;or&nbsp;auto-discovered)&nbsp;and&nbsp;sends&nbsp;Pushover<br>
+notifications&nbsp;only&nbsp;for:&nbsp;race&nbsp;start,&nbsp;100/50/10&nbsp;km&nbsp;to&nbsp;go,&nbsp;and&nbsp;finish.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="argparse.html">argparse</a><br>
+<a href="json.html">json</a><br>
+</td><td class="multicolumn"><a href="re.html">re</a><br>
+<a href="sys.html">sys</a><br>
+</td><td class="multicolumn"><a href="time.html">time</a><br>
+</td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+    
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-build_parser"><strong>build_parser</strong></a>() -&gt; argparse.ArgumentParser</dt><dd><span class="code">Build&nbsp;the&nbsp;CLI&nbsp;argument&nbsp;parser.</span></dd></dl>
+ <dl><dt><a name="-format_extra_row"><strong>format_extra_row</strong></a>(row: collections.abc.Mapping[str, object]) -&gt; str</dt><dd><span class="code">Format&nbsp;an&nbsp;``extra_results``&nbsp;entry&nbsp;into&nbsp;a&nbsp;compact&nbsp;string.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;row:&nbsp;Row&nbsp;from&nbsp;the&nbsp;``extra_results``&nbsp;JSON&nbsp;array.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;str:&nbsp;One-line&nbsp;description&nbsp;such&nbsp;as&nbsp;``"KOM&nbsp;#1&nbsp;Rider&nbsp;(5&nbsp;pts)&nbsp;+2s"``.</span></dd></dl>
+ <dl><dt><a name="-main"><strong>main</strong></a>(argv: list[str] | None = None) -&gt; int</dt><dd><span class="code">Run&nbsp;the&nbsp;CLI.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;argv:&nbsp;Optional&nbsp;list&nbsp;of&nbsp;arguments&nbsp;(defaults&nbsp;to&nbsp;``sys.argv``&nbsp;when&nbsp;None).<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;int:&nbsp;Process&nbsp;exit&nbsp;code&nbsp;(``0``&nbsp;on&nbsp;success).</span></dd></dl>
+ <dl><dt><a name="-print"><strong>print</strong></a> = _rich_print(*args, **kwargs)</dt></dl>
+</td></tr></table><p>
+<table class="section">
+<tr class="decor data-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Data</strong></td></tr>
+    
+<tr><td class="decor data-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><strong>STRICT_KM_MARKERS</strong> = [100.0, 50.0, 10.0]</td></tr></table>
+</body></html>

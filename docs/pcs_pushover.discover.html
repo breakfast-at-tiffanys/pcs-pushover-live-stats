@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module pcs_pushover.discover</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="pcs_pushover.html" class="white">pcs_pushover</a>.discover</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:/Users/antonsuhr/Documents/pcs-pushover-live-stats/pcs_pushover/discover.py">/Users/antonsuhr/Documents/pcs-pushover-live-stats/pcs_pushover/discover.py</a></td></tr></table>
+    <p><span class="code">Discover&nbsp;currently&nbsp;live&nbsp;PCS&nbsp;race&nbsp;tracker&nbsp;links.<br>
+&nbsp;<br>
+This&nbsp;module&nbsp;scrapes&nbsp;the&nbsp;PCS&nbsp;homepage&nbsp;to&nbsp;find&nbsp;anchors&nbsp;that&nbsp;point&nbsp;to&nbsp;live<br>
+trackers&nbsp;(either&nbsp;stage&nbsp;live&nbsp;pages&nbsp;or&nbsp;one‑day&nbsp;race&nbsp;result/live&nbsp;pages),<br>
+normalizes&nbsp;them&nbsp;to&nbsp;relative&nbsp;paths,&nbsp;and&nbsp;de‑duplicates&nbsp;the&nbsp;results.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="requests.html">requests</a><br>
+</td><td class="multicolumn"></td><td class="multicolumn"></td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+    
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-discover_live_race_paths"><strong>discover_live_race_paths</strong></a>() -&gt; list[str]</dt><dd><span class="code">Discover&nbsp;live&nbsp;PCS&nbsp;tracker&nbsp;links&nbsp;from&nbsp;the&nbsp;homepage.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;list[str]:&nbsp;Relative&nbsp;paths&nbsp;like&nbsp;``race/.../live``&nbsp;or<br>
+&nbsp;&nbsp;&nbsp;&nbsp;``race/.../result/live``.&nbsp;The&nbsp;list&nbsp;is&nbsp;de‑duplicated&nbsp;while&nbsp;preserving<br>
+&nbsp;&nbsp;&nbsp;&nbsp;order.</span></dd></dl>
+</td></tr></table>
+</body></html>

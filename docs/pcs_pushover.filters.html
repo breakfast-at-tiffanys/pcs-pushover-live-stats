@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module pcs_pushover.filters</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="pcs_pushover.html" class="white">pcs_pushover</a>.filters</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:/Users/antonsuhr/Documents/pcs-pushover-live-stats/pcs_pushover/filters.py">/Users/antonsuhr/Documents/pcs-pushover-live-stats/pcs_pushover/filters.py</a></td></tr></table>
+    <p><span class="code">Race&nbsp;filters&nbsp;and&nbsp;helpers&nbsp;for&nbsp;classification.<br>
+&nbsp;<br>
+Provides&nbsp;utilities&nbsp;to:<br>
+-&nbsp;Normalize&nbsp;live/result&nbsp;URLs&nbsp;to&nbsp;a&nbsp;base&nbsp;race&nbsp;path.<br>
+-&nbsp;Classify&nbsp;a&nbsp;race&nbsp;via&nbsp;procyclingstats'&nbsp;Race&nbsp;scraper.<br>
+-&nbsp;Decide&nbsp;whether&nbsp;a&nbsp;race&nbsp;is&nbsp;Men's&nbsp;WorldTour&nbsp;or&nbsp;World&nbsp;Championships.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="re.html">re</a><br>
+</td><td class="multicolumn"></td><td class="multicolumn"></td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+    
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-classify_race"><strong>classify_race</strong></a>(base_path: 'str') -&gt; 'tuple[str | None, str | None]'</dt><dd><span class="code">Fetch&nbsp;race&nbsp;classification&nbsp;fields&nbsp;using&nbsp;PCS&nbsp;Race&nbsp;scraper.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;base_path:&nbsp;Path&nbsp;like&nbsp;``race/&lt;name&gt;/&lt;year&gt;``.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Tuple&nbsp;of&nbsp;(uci_tour,&nbsp;category)&nbsp;or&nbsp;(None,&nbsp;None)&nbsp;if&nbsp;unavailable.</span></dd></dl>
+ <dl><dt><a name="-is_men_uwt_or_wc"><strong>is_men_uwt_or_wc</strong></a>(uci_tour: 'str | None', category: 'str | None') -&gt; 'bool'</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;the&nbsp;race&nbsp;is&nbsp;Men's&nbsp;WorldTour&nbsp;or&nbsp;World&nbsp;Championships.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;uci_tour:&nbsp;e.g.&nbsp;"UCI&nbsp;Worldtour",&nbsp;"UCI&nbsp;ProSeries",&nbsp;"World&nbsp;Championships".<br>
+&nbsp;&nbsp;&nbsp;&nbsp;category:&nbsp;e.g.&nbsp;"Men&nbsp;Elite",&nbsp;"ME&nbsp;-&nbsp;Men&nbsp;Elite",&nbsp;"Women&nbsp;Elite".</span></dd></dl>
+ <dl><dt><a name="-race_base_from_path"><strong>race_base_from_path</strong></a>(url_or_path: 'str') -&gt; 'str | None'</dt><dd><span class="code">Normalize&nbsp;any&nbsp;PCS&nbsp;race/live&nbsp;URL&nbsp;or&nbsp;path&nbsp;to&nbsp;a&nbsp;base&nbsp;``race/&lt;name&gt;/&lt;year&gt;``.<br>
+&nbsp;<br>
+Examples:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;``<a href="https://www.procyclingstats.com/race/tour-de-france/2024/stage-1/live">https://www.procyclingstats.com/race/tour-de-france/2024/stage-1/live</a>``<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→&nbsp;``race/tour-de-france/2024``<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;``race/paris-roubaix/2025/result/live``&nbsp;→&nbsp;``race/paris-roubaix/2025``<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;``race/world-championship/2025``&nbsp;→&nbsp;``race/world-championship/2025``<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;url_or_path:&nbsp;Absolute&nbsp;URL&nbsp;or&nbsp;relative&nbsp;PCS&nbsp;path.<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;normalized&nbsp;base&nbsp;path&nbsp;or&nbsp;``None``&nbsp;if&nbsp;it&nbsp;doesn't&nbsp;look&nbsp;like&nbsp;a&nbsp;PCS&nbsp;race.</span></dd></dl>
+</td></tr></table>
+</body></html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module pcs_pushover.state</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="pcs_pushover.html" class="white">pcs_pushover</a>.state</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:/Users/antonsuhr/Documents/pcs-pushover-live-stats/pcs_pushover/state.py">/Users/antonsuhr/Documents/pcs-pushover-live-stats/pcs_pushover/state.py</a></td></tr></table>
+    <p><span class="code">JSON-backed&nbsp;state&nbsp;storage&nbsp;for&nbsp;tracking&nbsp;per-race&nbsp;notifications.<br>
+&nbsp;<br>
+Keeps&nbsp;deduplication&nbsp;info&nbsp;and&nbsp;progress&nbsp;(e.g.,&nbsp;last&nbsp;status,&nbsp;km&nbsp;markers)&nbsp;so&nbsp;the<br>
+CLI&nbsp;avoids&nbsp;sending&nbsp;duplicate&nbsp;notifications&nbsp;across&nbsp;runs.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="json.html">json</a><br>
+</td><td class="multicolumn"><a href="os.html">os</a><br>
+</td><td class="multicolumn"></td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor index-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
+    
+<tr><td class="decor index-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl>
+<dt class="heading-text"><a href="builtins.html#object">builtins.object</a>
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="pcs_pushover.state.html#StateStore">StateStore</a>
+</dt></dl>
+</dd>
+</dl>
+ <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="StateStore">class <strong>StateStore</strong></a>(<a href="builtins.html#object">builtins.object</a>)</td></tr>
+    
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#StateStore">StateStore</a>(path:&nbsp;str&nbsp;=&nbsp;'.cache/state.json')&nbsp;-&amp;gt;&nbsp;None<br>
+&nbsp;<br>
+Persist&nbsp;small&nbsp;dict-like&nbsp;state&nbsp;to&nbsp;a&nbsp;JSON&nbsp;file.<br>
+&nbsp;<br>
+Attributes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;Path&nbsp;to&nbsp;the&nbsp;JSON&nbsp;file&nbsp;on&nbsp;disk.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn">Methods defined here:<br>
+<dl><dt><a name="StateStore-__init__"><strong>__init__</strong></a>(self, path: str = '.cache/state.json') -&gt; None</dt><dd><span class="code">Create&nbsp;a&nbsp;new&nbsp;state&nbsp;store.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;path:&nbsp;Filesystem&nbsp;path&nbsp;where&nbsp;the&nbsp;JSON&nbsp;data&nbsp;will&nbsp;be&nbsp;stored.</span></dd></dl>
+
+<dl><dt><a name="StateStore-for_race"><strong>for_race</strong></a>(self, race_key: str) -&gt; dict[str, typing.Any]</dt><dd><span class="code">Get&nbsp;or&nbsp;initialize&nbsp;state&nbsp;bucket&nbsp;for&nbsp;a&nbsp;race.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;race_key:&nbsp;Unique&nbsp;identifier&nbsp;for&nbsp;the&nbsp;race&nbsp;(e.g.,&nbsp;page&nbsp;id).<br>
+&nbsp;<br>
+Returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dict[str,&nbsp;Any]:&nbsp;Mutable&nbsp;mapping&nbsp;with&nbsp;the&nbsp;race&nbsp;state.</span></dd></dl>
+
+<dl><dt><a name="StateStore-load"><strong>load</strong></a>(self) -&gt; None</dt><dd><span class="code">Load&nbsp;state&nbsp;from&nbsp;disk&nbsp;if&nbsp;not&nbsp;already&nbsp;loaded.</span></dd></dl>
+
+<dl><dt><a name="StateStore-save"><strong>save</strong></a>(self) -&gt; None</dt><dd><span class="code">Atomically&nbsp;save&nbsp;state&nbsp;to&nbsp;disk.</span></dd></dl>
+
+<dl><dt><a name="StateStore-update_race"><strong>update_race</strong></a>(self, race_key: str, patch: dict[str, typing.Any]) -&gt; None</dt><dd><span class="code">Apply&nbsp;a&nbsp;partial&nbsp;update&nbsp;to&nbsp;a&nbsp;race&nbsp;state&nbsp;and&nbsp;persist.<br>
+&nbsp;<br>
+Args:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;race_key:&nbsp;Race&nbsp;identifier&nbsp;key.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;patch:&nbsp;Mapping&nbsp;of&nbsp;keys&nbsp;to&nbsp;update&nbsp;in&nbsp;the&nbsp;race&nbsp;state.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+</td></tr></table></td></tr></table>
+</body></html>

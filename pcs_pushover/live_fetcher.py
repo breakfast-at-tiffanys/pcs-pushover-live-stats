@@ -1,25 +1,22 @@
-"""Fetch and parse LiveStats JSON from PCS live pages.
+"""Fetch and parse LiveStats JSON from PCS live pages."""
 
-This module exposes ``LiveStatsClient`` which wraps the
-``procyclingstats.Scraper`` to retrieve a live page and extract the embedded
-``var data = {...};`` blob used by the PCS LiveStats tracker.
-"""
+from __future__ import annotations
 
 import json
 import re
+from types import SimpleNamespace
 from typing import Any
 
-try:
-    from procyclingstats import Scraper as _PCS_Scraper  # type: ignore
-except Exception:  # pragma: no cover - only hit in test environments missing dep
-    _PCS_Scraper = None  # type: ignore
+from bs4 import BeautifulSoup
+
+from .pcs_http import fetch_pcs_html, normalize_pcs_url
 
 
 class LiveStatsClient:
     """Client to fetch and parse PCS LiveStats pages.
 
     Attributes:
-        scraper: The underlying ``procyclingstats.Scraper`` instance.
+        scraper: Namespace exposing the current page URL.
         last_html: The last fetched page HTML, if available.
     """
 
@@ -28,18 +25,8 @@ class LiveStatsClient:
 
         Args:
             race_url: Relative path (``race/.../live``) or absolute PCS URL.
-
-        Raises:
-            ImportError: If the ``procyclingstats`` package is unavailable.
         """
-        # Accept relative (race/...) or absolute URLs
-        if _PCS_Scraper is None:
-            raise ImportError(
-                "procyclingstats package is required to fetch LiveStats. "
-                "Install it via pip or run within the project venv."
-            )
-        # Attribute typed as Any to avoid leaking Unknown from external lib
-        self.scraper: Any = _PCS_Scraper(race_url)  # type: ignore[call-arg]
+        self.scraper: Any = SimpleNamespace(url=normalize_pcs_url(race_url))
         self.last_html: str | None = None
 
     def refresh(self) -> dict[str, Any]:
@@ -48,9 +35,8 @@ class LiveStatsClient:
         Returns:
             dict[str, Any]: Parsed JSON object from the embedded ``var data``.
         """
-        # Use Scraper to fetch (uses requests under the hood)
-        self.scraper.update_html()
-        html = self.scraper.html.html
+        html, final_url = fetch_pcs_html(self.scraper.url)
+        self.scraper.url = final_url
         self.last_html = html
         data = self._extract_data_json(html)
         return data
@@ -62,14 +48,32 @@ class LiveStatsClient:
             str: The page title or ``"PCS LiveStats"`` as fallback.
         """
         try:
-            title_node = (
-                self.scraper.html.css_first(".page-title > .main > h1")
-                or self.scraper.html.css_first(".page-title > .title > h1")
-                or self.scraper.html.css_first(".page-title h1")
-            )
-            return title_node.text(strip=True)
+            if not self.last_html:
+                return "PCS LiveStats"
+            soup = BeautifulSoup(self.last_html, "html.parser")
+            for selector in (
+                ".page-title > .main > h1",
+                ".page-title > .title > h1",
+                ".page-title h1",
+            ):
+                title_node = soup.select_one(selector)
+                if title_node is not None:
+                    text = title_node.get_text(" ", strip=True)
+                    if text:
+                        return text
+            title_tag = soup.find("title")
+            if title_tag is not None:
+                title = title_tag.get_text(" ", strip=True)
+                title = re.sub(
+                    r"\s+\|\s+ProCyclingStats(?:\.com)?$",
+                    "",
+                    title,
+                )
+                if title:
+                    return title
         except Exception:
             return "PCS LiveStats"
+        return "PCS LiveStats"
 
     @staticmethod
     def _extract_data_json(html: str) -> dict[str, Any]:
@@ -82,6 +86,7 @@ class LiveStatsClient:
             dict[str, Any]: Parsed JSON object.
 
         Raises:
+            LiveStatsBlockedError: When PCS serves a bot-protection challenge.
             LiveStatsUnavailableError: When PCS signals a temporary outage.
             LiveStatsDataMissingError: When the ``var data`` block is missing
                 from the page (race not live yet, wrong URL, or layout change).
@@ -89,6 +94,10 @@ class LiveStatsClient:
         m = re.search(r"var\s+data\s*=\s*(\{.*?\});", html, re.S)
         if not m:
             lower = html.lower()
+            if "just a moment" in lower and "cloudflare" in lower:
+                raise LiveStatsBlockedError(
+                    "PCS blocked automated access with a Cloudflare challenge"
+                )
             if "temporarily unavailable" in lower or "technical difficulties" in lower:
                 raise LiveStatsUnavailableError(
                     "PCS page temporarily unavailable (technical difficulties)"
@@ -125,6 +134,10 @@ class LiveStatsError(ValueError):
 
 class LiveStatsUnavailableError(LiveStatsError):
     """Raised when PCS indicates a temporary unavailability."""
+
+
+class LiveStatsBlockedError(LiveStatsUnavailableError):
+    """Raised when PCS serves a bot-protection challenge page."""
 
 
 class LiveStatsDataMissingError(LiveStatsError):

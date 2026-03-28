@@ -2,7 +2,7 @@ PCS LiveStats → Pushover Notifier
 
 Small CLI to poll ProCyclingStats LiveStats pages and push updates to your phone via Pushover.
 
-- Uses the `procyclingstats` Python package to fetch the LiveStats HTML
+- Fetches PCS pages with a browser-like HTTP client to avoid live-page bot challenges
 - Extracts the embedded `var data = {...}` JSON and detects changes
 - Notifies only on: race start, 100 km to‑go, 50 km to‑go, 10 km to‑go, and finish
 

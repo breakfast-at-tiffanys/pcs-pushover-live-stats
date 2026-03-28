@@ -3,3 +3,4 @@ requests
 python-dotenv
 rich
 beautifulsoup4
+curl_cffi

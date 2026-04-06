@@ -1,5 +1,7 @@
 from pcs_pushover import live_fetcher as lf
-from pcs_pushover.live_fetcher import LiveStatsBlockedError
+from pcs_pushover.live_fetcher import (
+    LiveStatsBlockedError,
+)
 from pcs_pushover.live_fetcher import LiveStatsClient as L
 from pcs_pushover.live_fetcher import (
     LiveStatsDataMissingError,

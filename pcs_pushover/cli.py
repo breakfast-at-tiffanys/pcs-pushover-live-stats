@@ -142,14 +142,14 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument(
             "--server-alerts",
             action=bool_action,
-            default=True,
-            help="Enable alerts when PCS becomes unreachable (default: enabled)",
+            default=False,
+            help="Enable alerts when PCS becomes unreachable (default: disabled)",
         )
         p.add_argument(
             "--server-recovery-alerts",
             action=bool_action,
-            default=True,
-            help="Enable alerts when PCS becomes reachable again (default: enabled)",
+            default=False,
+            help="Enable alerts when PCS becomes reachable again (default: disabled)",
         )
     else:  # pragma: no cover
         p.add_argument(
@@ -401,7 +401,9 @@ def main(argv: list[str] | None = None) -> int:
                 try:
                     data = client.refresh()
                     # Success after failures → optionally notify recovery
-                    if fail_count > 0 and getattr(args, "server_recovery_alerts", True):
+                    if fail_count > 0 and getattr(
+                        args, "server_recovery_alerts", False
+                    ):
                         link_url = cast(
                             str | None,
                             getattr(client.scraper, "url", None),
@@ -422,7 +424,7 @@ def main(argv: list[str] | None = None) -> int:
                     threshold = int(getattr(args, "server_alert_threshold", 3))
                     cooldown = int(getattr(args, "server_alert_cooldown", 600))
                     if (
-                        getattr(args, "server_alerts", True)
+                        getattr(args, "server_alerts", False)
                         and fail_count >= threshold
                         and (
                             last_server_alert == 0.0
@@ -505,7 +507,7 @@ def main(argv: list[str] | None = None) -> int:
                     data = client_i.refresh()
                     # Success after failures → optionally notify recovery
                     if rec.get("fail_count", 0) > 0 and getattr(
-                        args, "server_recovery_alerts", True
+                        args, "server_recovery_alerts", False
                     ):
                         link_url = cast(
                             str | None,
@@ -527,7 +529,7 @@ def main(argv: list[str] | None = None) -> int:
                     threshold = int(getattr(args, "server_alert_threshold", 3))
                     cooldown = int(getattr(args, "server_alert_cooldown", 600))
                     if (
-                        getattr(args, "server_alerts", True)
+                        getattr(args, "server_alerts", False)
                         and rec["fail_count"] >= threshold
                         and (
                             rec.get("last_server_alert", 0.0) == 0.0

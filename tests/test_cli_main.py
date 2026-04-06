@@ -159,6 +159,12 @@ def test_cli_initial_refresh_failure(monkeypatch, tmp_path):
     assert rc == 2
 
 
+def test_server_alerts_disabled_by_default():
+    args = cli.build_parser().parse_args(["--race", "race/example/2025/stage-1/live"])
+    assert args.server_alerts is False
+    assert args.server_recovery_alerts is False
+
+
 def test_cli_loop_fetch_error_then_exit(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
 
@@ -402,41 +408,35 @@ def test_cli_auto_filter_applies(monkeypatch, tmp_path):
     assert rc == 0
 
 
-def test_server_down_alert_and_recovery(monkeypatch, tmp_path):
-    """Alert when failures exceed threshold, and recovery message after success."""
+def test_server_alerts_quiet_by_default(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
 
-    # First snapshot OK (initial handle), then failures, then success
-    class FlakyClient(FakeLiveStatsClient):
+    class RecoveringClient(FakeLiveStatsClient):
         def __init__(self, url: str):
             super().__init__(url)
-            type(self).default_seq = [
+            self._responses = [
                 {
                     "race_status": "prerace",
                     "finished": 0,
                     "kmtogo": 150.0,
                     "sec_since_start": 0,
                 },
-                # subsequent refresh calls will raise until we flip a flag
+                RuntimeError("net down"),
+                {
+                    "race_status": "prerace",
+                    "finished": 0,
+                    "kmtogo": 149.0,
+                    "sec_since_start": 0,
+                },
             ]
-            self._calls = 0
-            self._recover = False
 
         def refresh(self):
-            if self._calls == 0:
-                self._calls += 1
-                return super().refresh()
-            if not self._recover:
-                self._calls += 1
-                raise RuntimeError("net down")
-            return {
-                "race_status": "running",
-                "finished": 0,
-                "kmtogo": 140.0,
-                "sec_since_start": 10,
-            }
+            item = self._responses.pop(0)
+            if isinstance(item, Exception):
+                raise item
+            return item
 
-    monkeypatch.setattr(cli, "LiveStatsClient", FlakyClient)
+    monkeypatch.setattr(cli, "LiveStatsClient", RecoveringClient)
 
     calls = {"msgs": []}
 
@@ -454,18 +454,10 @@ def test_server_down_alert_and_recovery(monkeypatch, tmp_path):
 
     def sleeper(_):
         step["n"] += 1
-        # After two failures, simulate recovery
-        if step["n"] == 3:
-            # flip recovery flag on the single client instance in the module scope
-            # We don't have direct access; rely on raising KeyboardInterrupt next to end loop
-            pass
-        if step["n"] >= 4:
+        if step["n"] >= 3:
             raise KeyboardInterrupt()
 
     monkeypatch.setattr(cli.time, "sleep", sleeper)
-
-    # Launch in a thread-like loop; emulate recovery by swapping FlakyClient.refresh after two failed sleeps
-    # Simpler: just run and assert at least one server-down alert occurred
     rc = cli.main(
         [
             "--race",
@@ -479,4 +471,75 @@ def test_server_down_alert_and_recovery(monkeypatch, tmp_path):
         ]
     )
     assert rc == 0
-    assert any("unreachable" in m.lower() for m in calls["msgs"])  # server-down
+    assert not any("unreachable" in m.lower() for m in calls["msgs"])
+    assert not any("reachable again" in m.lower() for m in calls["msgs"])
+
+
+def test_server_down_alert_and_recovery_opt_in(monkeypatch, tmp_path):
+    """Alert on outage and recovery only when explicitly enabled."""
+    monkeypatch.chdir(tmp_path)
+
+    class RecoveringClient(FakeLiveStatsClient):
+        def __init__(self, url: str):
+            super().__init__(url)
+            self._responses = [
+                {
+                    "race_status": "prerace",
+                    "finished": 0,
+                    "kmtogo": 150.0,
+                    "sec_since_start": 0,
+                },
+                RuntimeError("net down"),
+                {
+                    "race_status": "prerace",
+                    "finished": 0,
+                    "kmtogo": 149.0,
+                    "sec_since_start": 0,
+                },
+            ]
+
+        def refresh(self):
+            item = self._responses.pop(0)
+            if isinstance(item, Exception):
+                raise item
+            return item
+
+    monkeypatch.setattr(cli, "LiveStatsClient", RecoveringClient)
+
+    calls = {"msgs": []}
+
+    class FakeNotifier:
+        def __init__(self, token=None, user=None):
+            pass
+
+        def send(self, message, title=None, url=None):
+            calls["msgs"].append(message)
+
+    monkeypatch.setattr(cli, "PushoverNotifier", FakeNotifier)
+
+    step = {"n": 0}
+
+    def sleeper(_):
+        step["n"] += 1
+        if step["n"] >= 3:
+            raise KeyboardInterrupt()
+
+    monkeypatch.setattr(cli.time, "sleep", sleeper)
+
+    rc = cli.main(
+        [
+            "--race",
+            "race/example/2025/stage-1/live",
+            "--interval",
+            "1",
+            "--server-alerts",
+            "--server-recovery-alerts",
+            "--server-alert-threshold",
+            "1",
+            "--server-alert-cooldown",
+            "1",
+        ]
+    )
+    assert rc == 0
+    assert any("unreachable" in m.lower() for m in calls["msgs"])
+    assert any("reachable again" in m.lower() for m in calls["msgs"])

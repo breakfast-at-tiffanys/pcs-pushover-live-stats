@@ -78,6 +78,8 @@ Notes
 - LiveStats pages differ by race/stage. Not all keys are always present. The tool is defensive and logs when data is missing.
 - State is kept in `.cache/state.json` per race so you don’t get duplicate notifications across restarts. Km notifications trigger only when crossing from above to below a marker during the current run; they aren’t backfilled if you start mid‑stage.
 - If a page is temporarily unavailable, retries continue without crashing.
+  Temporary PCS availability alerts are disabled by default; use
+  `--server-alerts` and `--server-recovery-alerts` to opt in.
 
 Configuration
 

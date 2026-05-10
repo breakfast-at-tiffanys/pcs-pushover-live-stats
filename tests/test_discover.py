@@ -12,14 +12,10 @@ def test_discover_live_race_paths(monkeypatch):
     </body></html>
     """
 
-    class R:
-        def __init__(self, text):
-            self.text = text
-
-    def fake_get(url, timeout=15):
-        return R(sample_html)
-
-    monkeypatch.setattr("pcs_pushover.discover.requests.get", fake_get)
+    monkeypatch.setattr(
+        "pcs_pushover.discover.fetch_pcs_html",
+        lambda url, **kwargs: (sample_html, url),
+    )
 
     paths = discover_live_race_paths()
     assert "race/vuelta-a-espana/2025/stage-20/live" in paths
@@ -29,9 +25,9 @@ def test_discover_live_race_paths(monkeypatch):
 
 
 def test_discover_handles_request_error(monkeypatch):
-    def boom(url, timeout=15):
+    def boom(url, **kwargs):
         raise RuntimeError("network down")
 
-    monkeypatch.setattr("pcs_pushover.discover.requests.get", boom)
+    monkeypatch.setattr("pcs_pushover.discover.fetch_pcs_html", boom)
     paths = discover_live_race_paths()
     assert paths == []

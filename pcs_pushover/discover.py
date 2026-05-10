@@ -5,8 +5,9 @@ trackers (either stage live pages or one‑day race result/live pages),
 normalizes them to relative paths, and de‑duplicates the results.
 """
 
-import requests
 from bs4 import BeautifulSoup
+
+from .pcs_http import PCS_BASE_URL, fetch_pcs_html
 
 
 def discover_live_race_paths() -> list[str]:
@@ -17,9 +18,8 @@ def discover_live_race_paths() -> list[str]:
         ``race/.../result/live``. The list is de‑duplicated while preserving
         order.
     """
-    url = "https://www.procyclingstats.com/"
     try:
-        html = requests.get(url, timeout=15).text
+        html, _ = fetch_pcs_html(PCS_BASE_URL)
     except Exception:
         return []
     soup = BeautifulSoup(html, "html.parser")
